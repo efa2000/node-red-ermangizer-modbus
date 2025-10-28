@@ -1,6 +1,3 @@
-# README.md
-
-```markdown
 # Node-RED ERMANGIZER Modbus Node
 
 A custom Node-RED node for decoding ERMANGIZER frequency converter Modbus RTU protocol messages according to the official protocol specification.
