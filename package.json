@@ -1,0 +1,26 @@
+{
+  "name": "node-red-ermangizer-modbus",
+  "version": "1.0.0",
+  "description": "Node-RED node for ERMANGIZER Modbus RTU protocol decoding",
+  "keywords": ["node-red", "modbus", "ermangizer", "frequency-converter"],
+  "node-red": {
+    "version": ">=3.0.0",
+    "nodes": {
+      "ermangizer-modbus": "ermangizer-modbus.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/node-red": "^1.3.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@node-red/nodes": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
