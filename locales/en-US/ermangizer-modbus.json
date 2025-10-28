@@ -1,0 +1,15 @@
+{
+    "ermangizer-modbus": {
+        "label": "ERMANGIZER Modbus Decoder",
+        "name": "Name",
+        "inputType": "Input Type",
+        "inputType_auto": "Auto Detect",
+        "inputType_buffer": "Buffer",
+        "inputType_hexstring": "Hex String",
+        "inputType_array": "Number Array",
+        "outputFormat": "Output Format",
+        "outputFormat_detailed": "Detailed",
+        "outputFormat_simplified": "Simplified",
+        "tip": "Decodes ERMANGIZER frequency converter Modbus RTU messages"
+    }
+}
