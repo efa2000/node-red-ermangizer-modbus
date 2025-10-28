@@ -1,0 +1,110 @@
+<script type="text/javascript">
+    RED.nodes.registerType('ermangizer-modbus', {
+        category: 'parser',
+        color: '#a6bbcf',
+        defaults: {
+            name: { value: '' },
+            inputType: { value: 'auto', required: true },
+            outputFormat: { value: 'detailed', required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-microchip',
+        paletteLabel: 'ERMANGIZER Modbus',
+        label: function() {
+            return this.name || 'ERMANGIZER Modbus';
+        },
+        labelStyle: function() {
+            return this.name ? 'node_label_italic' : '';
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ermangizer-modbus">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-inputType"><i class="fa fa-sign-in"></i> Input Type</label>
+        <select id="node-input-inputType" style="width: 70%;">
+            <option value="auto">Auto Detect</option>
+            <option value="buffer">Buffer</option>
+            <option value="hexstring">Hex String</option>
+            <option value="array">Number Array</option>
+        </select>
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-outputFormat"><i class="fa fa-sign-out"></i> Output Format</label>
+        <select id="node-input-outputFormat" style="width: 70%;">
+            <option value="detailed">Detailed</option>
+            <option value="simplified">Simplified</option>
+        </select>
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-info"><i class="fa fa-info-circle"></i> Info</label>
+        <div style="margin-top: 5px; padding: 10px; background: #f0f0f0; border-radius: 3px;">
+            <small>
+                <strong>Supported Input Formats:</strong><br>
+                • Buffer: Raw Buffer objects<br>
+                • Hex String: Hexadecimal strings (e.g., "3f0300010016911a")<br>
+                • Number Array: Arrays of numbers<br><br>
+                <strong>Output Formats:</strong><br>
+                • Detailed: Complete decoding with metadata<br>
+                • Simplified: Only register values
+            </small>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ermangizer-modbus">
+    <p>Decodes ERMANGIZER frequency converter Modbus RTU protocol messages.</p>
+    
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">Buffer | string | array</span></dt>
+        <dd>Modbus RTU message in one of the supported formats:
+            <ul>
+                <li><strong>Buffer:</strong> Raw Buffer object</li>
+                <li><strong>Hex String:</strong> Hexadecimal string (e.g., "3f0300010016911a")</li>
+                <li><strong>Number Array:</strong> Array of numbers representing bytes</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>Decoded Modbus data containing:
+            <ul>
+                <li><strong>slave_address</strong> - Device address</li>
+                <li><strong>function_code</strong> - Modbus function code</li>
+                <li><strong>function_name</strong> - Function description</li>
+                <li><strong>registers</strong> - Object with decoded register values</li>
+                <li><strong>raw_data</strong> - Original data in hex format</li>
+                <li><strong>timestamp</strong> - Processing timestamp</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node decodes Modbus RTU messages according to the ERMANGIZER frequency converter protocol.</p>
+    <p>It supports all registers defined in the protocol including:</p>
+    <ul>
+        <li>Output frequency, current, and voltage</li>
+        <li>Temperature and pressure readings</li>
+        <li>Error and status codes</li>
+        <li>Configuration parameters</li>
+        <li>Control commands</li>
+    </ul>
+    
+    <h3>Node Settings</h3>
+    <ul>
+        <li><strong>Name</strong> - Optional name for the node</li>
+        <li><strong>Input Type</strong> - Specify input format or use auto-detection</li>
+        <li><strong>Output Format</strong> - Choose between detailed or simplified output</li>
+    </ul>
+</script>
