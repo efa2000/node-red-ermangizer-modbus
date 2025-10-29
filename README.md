@@ -280,6 +280,4 @@ For issues and feature requests, please contact the maintainers or refer to the 
 - Multiple input format support
 - CRC verification
 - Comprehensive error handling
-```
 
-Этот README файл предоставляет полную документацию по установке, использованию и настройке ноды, включая примеры, устранение неполадок и справочную информацию по протоколу.
