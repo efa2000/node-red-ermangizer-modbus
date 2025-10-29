@@ -1,6 +1,8 @@
 {
   "name": "node-red-ermangizer-modbus",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "author": "Efa2000",
+  "license": "MIT",
   "description": "Node-RED node for ERMANGIZER Modbus RTU protocol decoding",
   "keywords": ["node-red", "modbus", "ermangizer", "frequency-converter"],
   "node-red": {
