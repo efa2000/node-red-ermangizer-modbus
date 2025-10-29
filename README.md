@@ -45,24 +45,7 @@ The node decodes all registers defined in the ERMANGIZER Modbus RTU protocol:
 - `status_command` - Command status code
 
 ## Installation
-
-### Method 1: Manual Installation
-
-1. Navigate to your Node-RED user directory (typically `~/.node-red`)
-2. Create the nodes directory if it doesn't exist:
-   ```bash
-   mkdir -p nodes/ermangizer-modbus
-   ```
-3. Copy all files to `nodes/ermangizer-modbus/`
-4. Install dependencies and build:
-   ```bash
-   cd nodes/ermangizer-modbus
-   npm install
-   npm run build
-   ```
-5. Restart Node-RED
-
-### Method 2: npm Installation (if published)
+### npm Installation
 
 ```bash
 cd ~/.node-red
@@ -170,32 +153,7 @@ msg.payload = "3f03002c3f032c01f4000100ea0020000000000001000000000001001e000a001
   "status_code": 0
 }
 ```
-
-### Example 2: Writing to a Register
-```javascript
-// Set pressure to 4.0 BAR
-msg.payload = "3f06100001908828";
-
-// Output:
-{
-  "slave_address": 63,
-  "function_code": 6,
-  "function_name": "Write Single Register",
-  "registers": {
-    "set_pressure": {
-      "value": 4.0,
-      "raw_value": 400,
-      "unit": "0.01 BAR",
-      "description": "Set pressure value",
-      "address": 4096,
-      "read_only": false,
-      "operation": "write"
-    }
-  }
-}
-```
-
-### Example 3: Error Response
+### Example 2: Error Response
 ```javascript
 // Error response example
 msg.payload = "3f8302a13d";
@@ -299,7 +257,7 @@ Enable Node-RED debug output to see detailed processing information:
 ## Protocol Reference
 
 This node implements the ERMANGIZER Modbus RTU protocol as specified in:
-- **Document**: `protocol_modbus_eg-g-220-03.pdf`
+- **Document**: `protocol_modbus_eg-g-220-03.pdf` https://www.ermangizer.ru/image/pdf/protocol_modbus_eg-g-220-03.pdf
 - **Baud Rate**: 9600
 - **Data Bits**: 8 bits + 1 stop bit
 - **Parity**: None
