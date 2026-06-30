@@ -1,6 +1,6 @@
 {
   "name": "node-red-ermangizer-modbus",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": "Efa2000",
   "license": "MIT",
   "description": "Node-RED node for ERMANGIZER Modbus RTU protocol decoding",
@@ -13,7 +13,9 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "pretest": "tsc",
+    "test": "node test/test.js"
   },
   "devDependencies": {
     "@types/node-red": "^1.3.0",

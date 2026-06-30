@@ -1,51 +1,114 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// NOTE: register addresses are DECIMAL, per the ERMANGIZER protocol ("в десятичной
+// системе"). Read/monitoring registers are at addresses 1-22; the two control
+// registers are at decimal 4096/4097 (= hex 0x1000/0x1001, the form used on the wire).
 const MODBUS_REGISTERS = {
-    // Read-only registers (0x0001-0x0007)
-    0x0001: { address: 0x0001, name: 'output_frequency', unit: '0.1 Hz', description: 'Current output frequency value', readOnly: true, scale: 0.1 },
-    0x0002: { address: 0x0002, name: 'output_current', unit: '0.1 A', description: 'Current output current value', readOnly: true, scale: 0.1 },
-    0x0003: { address: 0x0003, name: 'input_voltage', unit: 'V', description: 'Current input voltage value', readOnly: true },
-    0x0004: { address: 0x0004, name: 'temperature', unit: '°C', description: 'Current temperature display', readOnly: true },
-    0x0005: { address: 0x0005, name: 'pressure', unit: '0.01 bar', description: 'Actual pressure value', readOnly: true, scale: 0.01 },
-    0x0006: { address: 0x0006, name: 'error_code', unit: '', description: 'Error code', readOnly: true },
-    0x0007: { address: 0x0007, name: 'status_code', unit: '', description: 'Status code', readOnly: true },
-    // Read-write registers (0x0010-0x0022)
-    0x0010: { address: 0x0010, name: 'factory_reset', unit: '', description: 'Restore factory settings', readOnly: false },
-    0x0011: { address: 0x0011, name: 'initial_pressure_diff', unit: '0.01 bar', description: 'Initial pressure difference', readOnly: false, scale: 0.01 },
-    0x0012: { address: 0x0012, name: 'water_shortage_pressure', unit: '0.01 bar', description: 'Pressure value during water shortage', readOnly: false, scale: 0.01 },
-    0x0013: { address: 0x0013, name: 'water_shortage_time', unit: 's', description: 'Water shortage time', readOnly: false },
-    0x0014: { address: 0x0014, name: 'carrier_frequency', unit: '', description: 'Carrier frequency', readOnly: false },
-    0x0015: { address: 0x0015, name: 'accel_decel_time', unit: '0.1 ms', description: 'Acceleration and deceleration time', readOnly: false, scale: 0.1 },
-    0x0016: { address: 0x0016, name: 'pressure_tolerance', unit: '0.01 bar', description: 'Allowable pressure error', readOnly: false, scale: 0.01 },
-    0x0017: { address: 0x0017, name: 'min_shutdown_freq', unit: '0.1 Hz', description: 'Minimum shutdown frequency', readOnly: false, scale: 0.1 },
-    0x0018: { address: 0x0018, name: 'continuous_operation', unit: '', description: 'Enable continuous operation', readOnly: false },
-    0x0019: { address: 0x0019, name: 'measurement_range', unit: 'bar', description: 'Measurement range selection', readOnly: false },
-    0x0020: { address: 0x0020, name: 'overheat_setting', unit: '°C', description: 'Overheat setting', readOnly: false },
-    0x0021: { address: 0x0021, name: 'direction_setting', unit: '', description: 'Set direction', readOnly: false },
-    0x0022: { address: 0x0022, name: 'local_address', unit: '', description: 'Local address', readOnly: false },
-    // Additional registers
+    // Read-only registers (addresses 1-7)
+    1: { address: 1, name: 'output_frequency', unit: '0.1 Hz', description: 'Current output frequency value', readOnly: true, scale: 0.1 },
+    2: { address: 2, name: 'output_current', unit: '0.1 A', description: 'Current output current value', readOnly: true, scale: 0.1 },
+    3: { address: 3, name: 'input_voltage', unit: 'V', description: 'Current input voltage value', readOnly: true },
+    4: { address: 4, name: 'temperature', unit: '°C', description: 'Current temperature display', readOnly: true },
+    5: { address: 5, name: 'pressure', unit: '0.01 bar', description: 'Actual pressure value', readOnly: true, scale: 0.01 },
+    6: { address: 6, name: 'error_code', unit: '', description: 'Error code', readOnly: true },
+    7: { address: 7, name: 'status_code', unit: '', description: 'Status code', readOnly: true },
+    // Read-write registers (addresses 10-22)
+    10: { address: 10, name: 'factory_reset', unit: '', description: 'Restore factory settings', readOnly: false },
+    11: { address: 11, name: 'initial_pressure_diff', unit: '0.01 bar', description: 'Pressure difference for sleep/wake (exit) mode', readOnly: false, scale: 0.01 },
+    12: { address: 12, name: 'water_shortage_pressure', unit: '0.01 bar', description: 'Dry-run pressure value', readOnly: false, scale: 0.01 },
+    13: { address: 13, name: 'water_shortage_time', unit: 's', description: 'Dry-run time', readOnly: false },
+    14: { address: 14, name: 'carrier_frequency', unit: '', description: 'Carrier frequency (see manual param P014)', readOnly: false },
+    15: { address: 15, name: 'accel_decel_time', unit: '0.1 ms', description: 'Acceleration and deceleration time', readOnly: false, scale: 0.1 },
+    16: { address: 16, name: 'pressure_tolerance', unit: '0.01 bar', description: 'Allowable pressure error', readOnly: false, scale: 0.01 },
+    17: { address: 17, name: 'min_shutdown_freq', unit: '0.1 Hz', description: 'Minimum frequency', readOnly: false, scale: 0.1 },
+    18: { address: 18, name: 'continuous_operation', unit: '', description: 'Disable sleep mode (continuous operation)', readOnly: false },
+    19: { address: 19, name: 'measurement_range', unit: 'bar', description: 'Pressure sensor range selection', readOnly: false },
+    20: { address: 20, name: 'overheat_setting', unit: '°C', description: 'Temperature alarm threshold', readOnly: false },
+    21: { address: 21, name: 'direction_setting', unit: '', description: 'Rotation direction (for ER-G-380-02)', readOnly: false },
+    22: { address: 22, name: 'local_address', unit: '', description: 'Local address', readOnly: false },
+    // Control registers (decimal 4096/4097 = hex 0x1000/0x1001)
     0x1000: { address: 0x1000, name: 'set_pressure', unit: '0.01 BAR', description: 'Set pressure value', readOnly: false, scale: 0.01 },
     0x1001: { address: 0x1001, name: 'status_command', unit: '', description: 'Command status code', readOnly: false }
 };
 const ERROR_CODES = {
     0: 'No error',
     1: 'Equipment overcurrent, short circuit',
-    2: 'Overload',
-    3: 'Low pressure (no pressure sensor)',
-    4: 'Overpressure',
+    2: 'Power overload',
+    3: 'Pressure sensor fault or incorrect connection',
+    4: 'Overpressure or pressure sensor fault',
     5: 'Low pressure',
     6: 'Overpressure',
     7: 'Phase loss (power phase loss)',
     8: 'Overheating',
-    9: 'Insufficient power',
-    10: 'Software current overload',
+    9: 'Power overload',
+    10: 'Software current fault',
     11: 'Communication failure',
-    12: 'Default',
+    12: 'Reserved',
     13: 'Motor locked',
     14: 'Motor phase loss',
     15: 'Motor overspeed',
     16: 'Memory failure (FLASH failure)'
 };
+// Standard Modbus RTU CRC-16 (polynomial 0xA001, transmitted low byte first).
+function calculateCRC16(data) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < data.length; i++) {
+        crc ^= data[i];
+        for (let j = 0; j < 8; j++) {
+            crc = (crc & 0x0001) ? (crc >> 1) ^ 0xA001 : crc >> 1;
+        }
+    }
+    return crc;
+}
+// Appends a little-endian CRC-16 to a frame body and returns the full frame.
+function appendCRC(body) {
+    const frame = Buffer.alloc(body.length + 2);
+    body.copy(frame);
+    frame.writeUInt16LE(calculateCRC16(body), body.length);
+    return frame;
+}
+// Reverse direction: builds valid Modbus RTU frames (CRC computed automatically).
+class ModbusEncoder {
+    appendCRC(body) {
+        return appendCRC(body);
+    }
+    // Function 0x03 request: read `count` holding registers starting at `startAddress`.
+    encodeReadRequest(slave, startAddress, count) {
+        const body = Buffer.alloc(6);
+        body[0] = slave;
+        body[1] = 0x03;
+        body.writeUInt16BE(startAddress & 0xFFFF, 2);
+        body.writeUInt16BE(count & 0xFFFF, 4);
+        return appendCRC(body);
+    }
+    // Function 0x03 response: the register `values` (16-bit each) returned by the device.
+    encodeReadResponse(slave, values) {
+        const byteCount = values.length * 2;
+        const body = Buffer.alloc(3 + byteCount);
+        body[0] = slave;
+        body[1] = 0x03;
+        body[2] = byteCount;
+        values.forEach((v, i) => body.writeUInt16BE(v & 0xFFFF, 3 + i * 2));
+        return appendCRC(body);
+    }
+    // Function 0x06: write a single register.
+    encodeWriteRequest(slave, address, value) {
+        const body = Buffer.alloc(6);
+        body[0] = slave;
+        body[1] = 0x06;
+        body.writeUInt16BE(address & 0xFFFF, 2);
+        body.writeUInt16BE(value & 0xFFFF, 4);
+        return appendCRC(body);
+    }
+    // Exception response (function code | 0x80).
+    encodeErrorResponse(slave, functionCode, exceptionCode) {
+        const body = Buffer.alloc(3);
+        body[0] = slave;
+        body[1] = (functionCode | 0x80) & 0xFF;
+        body[2] = exceptionCode;
+        return appendCRC(body);
+    }
+}
 class ModbusDecoder {
     inputToBuffer(input) {
         if (Buffer.isBuffer(input)) {
@@ -65,33 +128,19 @@ class ModbusDecoder {
             throw new Error('Unsupported input type. Expected Buffer, hex string or number array.');
         }
     }
-    calculateCRC16(data) {
-        let crc = 0xFFFF;
-        for (let i = 0; i < data.length; i++) {
-            crc ^= data[i];
-            for (let j = 0; j < 8; j++) {
-                if (crc & 0x0001) {
-                    crc = (crc >> 1) ^ 0xA001;
-                }
-                else {
-                    crc = crc >> 1;
-                }
-            }
-        }
-        return crc;
-    }
     verifyCRC(data) {
         if (data.length < 2)
             return false;
         const messageWithoutCRC = data.slice(0, -2);
         const receivedCRC = data.readUInt16LE(data.length - 2);
-        const calculatedCRC = this.calculateCRC16(messageWithoutCRC);
+        const calculatedCRC = calculateCRC16(messageWithoutCRC);
         return receivedCRC === calculatedCRC;
     }
     decodeStatusRegister(status) {
+        // Per protocol: bit0 (RS) = run/stop, bit1 (LS) = water shortage.
         return {
-            water_shortage: (status & 0x0001) !== 0,
-            running: (status & 0x0002) !== 0,
+            running: (status & 0x0001) !== 0,
+            water_shortage: (status & 0x0002) !== 0,
             raw_value: status
         };
     }
@@ -101,21 +150,21 @@ class ModbusDecoder {
             value = Number((rawValue * register.scale).toFixed(3));
         }
         switch (register.address) {
-            case 0x0006:
+            case 6: // error_code
                 return {
                     code: rawValue,
                     description: ERROR_CODES[rawValue] || 'Unknown error',
                     raw_value: rawValue
                 };
-            case 0x0007:
+            case 7: // status_code
                 return this.decodeStatusRegister(rawValue);
-            case 0x0014:
+            case 14: // carrier_frequency
                 return {
                     value: rawValue === 72 ? 'H' : 'L',
                     code: rawValue,
                     raw_value: rawValue
                 };
-            case 0x1001:
+            case 0x1001: // status_command (4097)
                 const statusMap = {
                     0x00: 'invalid',
                     0x01: 'running',
@@ -127,12 +176,11 @@ class ModbusDecoder {
                     description: statusMap[rawValue] || 'Unknown status',
                     raw_value: rawValue
                 };
-            case 0x0019:
+            case 19: // measurement_range
                 const rangeMap = {
                     6: '6 bar',
                     10: '10 bar',
-                    16: '16 bar',
-                    25: '25 bar'
+                    16: '16 bar'
                 };
                 return {
                     value: rangeMap[rawValue] || `Unknown (${rawValue})`,
@@ -145,7 +193,10 @@ class ModbusDecoder {
             raw_value: rawValue
         };
     }
-    decodeModbusMessage(input) {
+    // `startAddress` is the address of the first register in a function 0x03 response.
+    // The response frame itself does not carry it; the protocol's documented usage reads
+    // from address 1, which is the default.
+    decodeModbusMessage(input, startAddress = 1) {
         const buffer = this.inputToBuffer(input);
         if (buffer.length < 4) {
             throw new Error('Message too short');
@@ -168,16 +219,18 @@ class ModbusDecoder {
             const registerCount = byteCount / 2;
             for (let i = 0; i < registerCount; i++) {
                 const registerValue = buffer.readUInt16BE(3 + i * 2);
-                const registerAddress = 0x0001 + i;
+                const registerAddress = startAddress + i;
                 if (MODBUS_REGISTERS[registerAddress]) {
                     const register = MODBUS_REGISTERS[registerAddress];
                     const decodedValue = this.decodeRegisterValue(register, registerValue);
                     result.registers[register.name] = {
-                        ...decodedValue,
                         unit: register.unit,
                         description: register.description,
                         address: register.address,
-                        read_only: register.readOnly
+                        read_only: register.readOnly,
+                        // Decoded fields (e.g. a per-value description for error_code)
+                        // take precedence over the register's static metadata.
+                        ...decodedValue
                     };
                 }
                 else {
@@ -198,11 +251,11 @@ class ModbusDecoder {
                 const register = MODBUS_REGISTERS[registerAddress];
                 const decodedValue = this.decodeRegisterValue(register, registerValue);
                 result.registers[register.name] = {
-                    ...decodedValue,
                     unit: register.unit,
                     description: register.description,
                     address: registerAddress,
                     read_only: register.readOnly,
+                    ...decodedValue,
                     operation: 'write'
                 };
             }
@@ -232,7 +285,7 @@ class ModbusDecoder {
         return functions[code] || `Unknown (${code})`;
     }
 }
-module.exports = function (RED) {
+const nodeRegistration = function (RED) {
     function ErmangizerModbusNode(config) {
         RED.nodes.createNode(this, config);
         this.name = config.name;
@@ -240,19 +293,22 @@ module.exports = function (RED) {
         this.outputFormat = config.outputFormat || 'detailed';
         const decoder = new ModbusDecoder();
         this.on('input', (msg, send, done) => {
-            try {
-                let inputData = msg.payload;
-                if (this.inputType === 'auto') {
-                    if (Buffer.isBuffer(inputData)) {
-                        this.inputType = 'buffer';
-                    }
-                    else if (typeof inputData === 'string' && /^[0-9a-fA-F\s]+$/.test(inputData)) {
-                        this.inputType = 'hexstring';
-                    }
-                    else if (Array.isArray(inputData)) {
-                        this.inputType = 'array';
-                    }
+            const inputData = msg.payload;
+            // Detect the format per message without mutating the node's configured
+            // mode (otherwise the first message would lock auto-detection forever).
+            let detectedType = this.inputType;
+            if (detectedType === 'auto') {
+                if (Buffer.isBuffer(inputData)) {
+                    detectedType = 'buffer';
                 }
+                else if (typeof inputData === 'string' && /^[0-9a-fA-F\s]+$/.test(inputData)) {
+                    detectedType = 'hexstring';
+                }
+                else if (Array.isArray(inputData)) {
+                    detectedType = 'array';
+                }
+            }
+            try {
                 const decodedData = decoder.decodeModbusMessage(inputData);
                 if (this.outputFormat === 'simplified') {
                     const simplified = {
@@ -260,9 +316,24 @@ module.exports = function (RED) {
                         function: decodedData.function_name,
                         timestamp: decodedData.timestamp
                     };
+                    // Simplified = one scalar per register: prefer `value`, then a
+                    // decoded `code` (error_code, status_command), then `raw_value`
+                    // (e.g. the status_code bitfield). Falls back to the object only
+                    // if none of those exist.
                     Object.keys(decodedData.registers).forEach(key => {
                         const reg = decodedData.registers[key];
-                        simplified[key] = reg.value !== undefined ? reg.value : reg;
+                        if (reg.value !== undefined) {
+                            simplified[key] = reg.value;
+                        }
+                        else if (reg.code !== undefined) {
+                            simplified[key] = reg.code;
+                        }
+                        else if (reg.raw_value !== undefined) {
+                            simplified[key] = reg.raw_value;
+                        }
+                        else {
+                            simplified[key] = reg;
+                        }
                     });
                     if (decodedData.error) {
                         simplified.error = decodedData.error;
@@ -279,7 +350,7 @@ module.exports = function (RED) {
             catch (error) {
                 msg.payload = {
                     error: error.message,
-                    input_type: this.inputType,
+                    input_type: detectedType,
                     original_data: msg.payload
                 };
                 msg.error = error;
@@ -290,3 +361,12 @@ module.exports = function (RED) {
     }
     RED.nodes.registerType('ermangizer-modbus', ErmangizerModbusNode);
 };
+// Node-RED loads the module by calling the exported function. The decoder/encoder
+// and protocol tables are attached for programmatic use and unit testing.
+module.exports = nodeRegistration;
+module.exports.ModbusDecoder = ModbusDecoder;
+module.exports.ModbusEncoder = ModbusEncoder;
+module.exports.MODBUS_REGISTERS = MODBUS_REGISTERS;
+module.exports.ERROR_CODES = ERROR_CODES;
+module.exports.calculateCRC16 = calculateCRC16;
+module.exports.appendCRC = appendCRC;

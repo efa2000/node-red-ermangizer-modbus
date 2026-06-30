@@ -1,6 +1,6 @@
 # Node-RED ERMANGIZER Modbus Node
 
-A custom Node-RED node for decoding ERMANGIZER frequency converter Modbus RTU protocol messages according to the official protocol specification.
+A custom Node-RED node for decoding ERMANGIZER (ER-G-220-03, ER-G-220-04, ER-G-380-02) frequency converter Modbus RTU protocol messages according to the official protocol specification.
 
 ## Features
 
@@ -27,18 +27,20 @@ The node decodes all registers defined in the ERMANGIZER Modbus RTU protocol:
 
 ### Read-Write Registers
 - `factory_reset` - Restore factory settings
-- `initial_pressure_diff` - Initial pressure difference (0.01 bar)
-- `water_shortage_pressure` - Pressure value during water shortage (0.01 bar)
-- `water_shortage_time` - Water shortage time (s)
-- `carrier_frequency` - Carrier frequency selection
+- `initial_pressure_diff` - Pressure difference for sleep/wake (exit) mode (0.01 bar)
+- `water_shortage_pressure` - Dry-run pressure value (0.01 bar)
+- `water_shortage_time` - Dry-run time (s)
+- `carrier_frequency` - Carrier frequency (see manual param P014)
 - `accel_decel_time` - Acceleration and deceleration time (0.1 ms)
 - `pressure_tolerance` - Allowable pressure error (0.01 bar)
-- `min_shutdown_freq` - Minimum shutdown frequency (0.1 Hz)
-- `continuous_operation` - Enable continuous operation
-- `measurement_range` - Measurement range selection (bar)
-- `overheat_setting` - Overheat setting (°C)
-- `direction_setting` - Set rotation direction
+- `min_shutdown_freq` - Minimum frequency (0.1 Hz)
+- `continuous_operation` - Disable sleep mode (continuous operation)
+- `measurement_range` - Pressure sensor range selection (bar)
+- `overheat_setting` - Temperature alarm threshold (°C)
+- `direction_setting` - Rotation direction (for ER-G-380-02)
 - `local_address` - Local Modbus address
+
+> **Note:** Register output keys (e.g. `water_shortage_pressure`, `continuous_operation`) are kept stable for backward compatibility; their descriptions follow the 2026 protocol revision, where some were reworded (water-shortage → dry-run, continuous-operation ↔ disable-sleep).
 
 ### Control Registers
 - `set_pressure` - Set pressure value (0.01 BAR)
@@ -179,17 +181,17 @@ The node decodes all ERMANGIZER error codes:
 |------|-------------|
 | 0 | No error |
 | 1 | Equipment overcurrent, short circuit |
-| 2 | Overload |
-| 3 | Low pressure (no pressure sensor) |
-| 4 | Overpressure |
+| 2 | Power overload |
+| 3 | Pressure sensor fault or incorrect connection |
+| 4 | Overpressure or pressure sensor fault |
 | 5 | Low pressure |
 | 6 | Overpressure |
 | 7 | Phase loss (power phase loss) |
 | 8 | Overheating |
-| 9 | Insufficient power |
-| 10 | Software current overload |
+| 9 | Power overload |
+| 10 | Software current fault |
 | 11 | Communication failure |
-| 12 | Default |
+| 12 | Reserved |
 | 13 | Motor locked |
 | 14 | Motor phase loss |
 | 15 | Motor overspeed |
@@ -201,9 +203,9 @@ The status register (0x0007) is decoded into individual bits:
 
 ```javascript
 {
-  "water_shortage": false,  // Bit 0: 0=no water shortage, 1=water shortage
-  "running": true,          // Bit 1: 0=stopped, 1=running
-  "raw_value": 2           // Original register value
+  "running": true,          // Bit 0 (RS): 0=stopped, 1=running
+  "water_shortage": false,  // Bit 1 (LS): 0=no water shortage, 1=water shortage
+  "raw_value": 1           // Original register value
 }
 ```
 
@@ -225,6 +227,34 @@ If you're modifying the TypeScript source:
    ```bash
    npm run dev
    ```
+
+## Testing
+
+The package ships with a dependency-free test suite (`test/test.js`) that validates
+CRC-16 against the official documented frames, decoding of every register, and
+encode→decode round-trips:
+
+```bash
+npm test   # runs `tsc` then executes the suite
+```
+
+## Building Frames (encoder)
+
+In addition to decoding, the module exports a `ModbusEncoder` that builds valid
+frames with the CRC computed automatically — useful for generating requests or
+test fixtures:
+
+```javascript
+const { ModbusEncoder } = require('node-red-ermangizer-modbus');
+const enc = new ModbusEncoder();
+
+enc.encodeReadRequest(0x3F, 1, 22);        // read 22 registers from address 1
+enc.encodeWriteRequest(0x3F, 0x1000, 400); // set pressure to 4.00 bar
+enc.appendCRC(Buffer.from([0x3f, 0x06]));  // append a CRC-16 to any frame body
+```
+
+The `ModbusDecoder`, `MODBUS_REGISTERS`, `ERROR_CODES`, `calculateCRC16` and
+`appendCRC` helpers are exported as well.
 
 ## Troubleshooting
 
@@ -256,8 +286,8 @@ Enable Node-RED debug output to see detailed processing information:
 
 ## Protocol Reference
 
-This node implements the ERMANGIZER Modbus RTU protocol as specified in:
-- **Document**: `protocol_modbus_eg-g-220-03.pdf` https://www.ermangizer.ru/image/pdf/protocol_modbus_eg-g-220-03.pdf
+This node implements the ERMANGIZER Modbus RTU protocol (ER-G-220-03, ER-G-220-04, ER-G-380-02; 2026 revision) as specified in:
+- **Document**: `protocol_modbus_eg-g-220-03.pdf` — https://www.ermangizer.ru/docs/220-03/protocol_modbus_eg-g-220-03.pdf (see also https://www.ermangizer.ru/documentation.html)
 - **Baud Rate**: 9600
 - **Data Bits**: 8 bits + 1 stop bit
 - **Parity**: None
@@ -273,6 +303,16 @@ This project is licensed under the MIT License.
 For issues and feature requests, please contact the maintainers or refer to the ERMANGIZER protocol documentation.
 
 ## Changelog
+
+### v1.1.0
+- Aligned with the 2026 protocol revision (ER-G-220-03 / ER-G-220-04 / ER-G-380-02); updated register descriptions and error codes
+- **Fix:** register addresses are decimal (1–22) — read/write registers 10–22 previously decoded as `unknown`
+- **Fix:** status bits were swapped (bit0=running, bit1=water shortage)
+- **Fix:** decoded descriptions (e.g. `error_code` "No error") no longer overwritten by static metadata
+- **Fix:** auto-detect no longer permanently locks the node's input format after the first message
+- Simplified output now emits a scalar per register (value → code → raw_value)
+- Added `ModbusEncoder` for building valid frames with automatic CRC
+- Added a dependency-free test suite (`npm test`)
 
 ### v1.0.0
 - Initial release
