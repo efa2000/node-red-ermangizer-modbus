@@ -1,100 +1,104 @@
-# Node-RED ERMANGIZER Modbus Node
+**Русский** · [English](README.en.md)
 
-A custom Node-RED node for decoding ERMANGIZER (ER-G-220-03, ER-G-220-04, ER-G-380-02) frequency converter Modbus RTU protocol messages according to the official protocol specification.
+# Node-RED ERMANGIZER Modbus
 
-## Features
+Кастомный узел Node-RED для декодирования и формирования сообщений протокола Modbus RTU частотных преобразователей ERMANGIZER (ER-G-220-03, ER-G-220-04, ER-G-380-02) согласно официальной спецификации протокола.
 
-- 🚀 **Multiple Input Formats**: Supports Buffer, Hex String, and Number Array inputs
-- 🔍 **Auto Detection**: Automatic input type detection
-- 📊 **Two Output Formats**: Detailed (full metadata) and Simplified (values only)
-- ✅ **CRC Verification**: Ensures data integrity with CRC-16 checks
-- 🛡️ **Error Handling**: Comprehensive error handling with descriptive messages
-- 📋 **Complete Protocol Support**: Decodes all registers from the ERMANGIZER protocol
-- 🌐 **TypeScript**: Written in TypeScript for better maintainability
+## Возможности
 
-## Supported Registers
+- 🚀 **Несколько форматов входа**: Buffer, hex-строка и массив чисел
+- 🔍 **Автоопределение**: автоматическое определение типа входа
+- 📊 **Два формата вывода**: подробный (полные метаданные) и упрощённый (только значения)
+- ✅ **Проверка CRC**: контроль целостности данных по CRC-16
+- 🛡️ **Обработка ошибок**: понятные сообщения об ошибках
+- 📤 **Узел-энкодер команд**: собирает кадры Modbus из человекочитаемых команд (`{command:"start"}`, `{write:"set_pressure", value:3.5}`) — без ручной сборки hex
+- 📋 **Полная поддержка протокола**: декодирует все регистры ERMANGIZER
+- 🌐 **Локализация**: справка и метки редактора на русском и английском
+- 🌐 **TypeScript**: написан на TypeScript
 
-The node decodes all registers defined in the ERMANGIZER Modbus RTU protocol:
+## Поддерживаемые регистры
 
-### Read-Only Registers
-- `output_frequency` - Current output frequency (0.1 Hz)
-- `output_current` - Current output current (0.1 A)
-- `input_voltage` - Current input voltage (V)
-- `temperature` - Current temperature (°C)
-- `pressure` - Actual pressure value (0.01 bar)
-- `error_code` - Error code with descriptions
-- `status_code` - Status code with bit-level decoding
+Узел декодирует все регистры протокола Modbus RTU ERMANGIZER:
 
-### Read-Write Registers
-- `factory_reset` - Restore factory settings
-- `initial_pressure_diff` - Pressure difference for sleep/wake (exit) mode (0.01 bar)
-- `water_shortage_pressure` - Dry-run pressure value (0.01 bar)
-- `water_shortage_time` - Dry-run time (s)
-- `carrier_frequency` - Carrier frequency (see manual param P014)
-- `accel_decel_time` - Acceleration and deceleration time (0.1 ms)
-- `pressure_tolerance` - Allowable pressure error (0.01 bar)
-- `min_shutdown_freq` - Minimum frequency (0.1 Hz)
-- `continuous_operation` - Disable sleep mode (continuous operation)
-- `measurement_range` - Pressure sensor range selection (bar)
-- `overheat_setting` - Temperature alarm threshold (°C)
-- `direction_setting` - Rotation direction (for ER-G-380-02)
-- `local_address` - Local Modbus address
+### Регистры только для чтения
+- `output_frequency` — текущая выходная частота (0.1 Гц)
+- `output_current` — текущий выходной ток (0.1 А)
+- `input_voltage` — текущее входное напряжение (В)
+- `temperature` — текущая температура (°C)
+- `pressure` — фактическое давление (0.01 бар)
+- `error_code` — код ошибки с описанием
+- `status_code` — код статуса с побитовой расшифровкой
 
-> **Note:** Register output keys (e.g. `water_shortage_pressure`, `continuous_operation`) are kept stable for backward compatibility; their descriptions follow the 2026 protocol revision, where some were reworded (water-shortage → dry-run, continuous-operation ↔ disable-sleep).
+### Регистры чтения/записи
+- `factory_reset` — сброс к заводским настройкам
+- `initial_pressure_diff` — перепад давления для сна/пробуждения (0.01 бар)
+- `water_shortage_pressure` — давление сухого хода (0.01 бар)
+- `water_shortage_time` — время сухого хода (с)
+- `carrier_frequency` — несущая частота (см. параметр P014 в руководстве)
+- `accel_decel_time` — время разгона и торможения (0.1 мс)
+- `pressure_tolerance` — допустимая погрешность давления (0.01 бар)
+- `min_shutdown_freq` — минимальная частота (0.1 Гц)
+- `continuous_operation` — отключение режима сна (непрерывная работа)
+- `measurement_range` — выбор диапазона датчика давления (бар)
+- `overheat_setting` — порог тревоги по температуре (°C)
+- `direction_setting` — направление вращения (для ER-G-380-02)
+- `local_address` — локальный адрес Modbus
 
-### Control Registers
-- `set_pressure` - Set pressure value (0.01 BAR)
-- `status_command` - Command status code
+> **Примечание:** имена выходных ключей регистров (например, `water_shortage_pressure`, `continuous_operation`) сохранены для обратной совместимости; их описания соответствуют редакции протокола 2026 года, где часть терминов переформулирована (нехватка воды → сухой ход, непрерывная работа ↔ отключение сна).
 
-## Installation
-### npm Installation
+### Управляющие регистры
+- `set_pressure` — заданное давление (0.01 бар)
+- `status_command` — код команды статуса
+
+## Установка
+### Установка через npm
 
 ```bash
 cd ~/.node-red
 npm install node-red-ermangizer-modbus
 ```
 
-Then restart Node-RED.
+Затем перезапустите Node-RED.
 
-## Usage
+## Использование
 
-### Basic Setup
+### Базовая настройка
 
-1. **Add the node** to your flow from the palette (category: "parser")
-2. **Configure settings**:
-   - **Name**: Optional node name
-   - **Input Type**: Auto-detect or specify format
-   - **Output Format**: Choose between Detailed or Simplified
-3. **Connect input**: Connect to any node that outputs Modbus RTU data
-4. **Connect output**: Process the decoded data in subsequent nodes
+1. **Добавьте узел** в flow из палитры (категория «parser»)
+2. **Настройте параметры**:
+   - **Имя**: необязательное имя узла
+   - **Тип входа**: автоопределение или явный формат
+   - **Формат вывода**: подробный или упрощённый
+3. **Подключите вход**: к любому узлу, отдающему данные Modbus RTU
+4. **Подключите выход**: обрабатывайте декодированные данные далее
 
-### Input Formats
+### Форматы входа
 
-The node accepts three input formats:
+Узел принимает три формата входа:
 
-#### 1. Buffer (Recommended)
+#### 1. Buffer (рекомендуется)
 ```javascript
-// From serial port or TCP Modbus connection
-msg.payload = buffer; // Raw Buffer object
+// Из последовательного порта или TCP-соединения Modbus
+msg.payload = buffer; // объект Buffer
 ```
 
-#### 2. Hex String
+#### 2. Hex-строка
 ```javascript
-// Hexadecimal string (spaces optional)
+// Шестнадцатеричная строка (пробелы необязательны)
 msg.payload = "3f0300010016911a";
-// or
+// или
 msg.payload = "3f 03 00 01 00 16 91 1a";
 ```
 
-#### 3. Number Array
+#### 3. Массив чисел
 ```javascript
-// Array of byte values
+// Массив байт
 msg.payload = [0x3f, 0x03, 0x00, 0x01, 0x00, 0x16, 0x91, 0x1a];
 ```
 
-### Output Formats
+### Форматы вывода
 
-#### Detailed Format (Default)
+#### Подробный формат (по умолчанию)
 ```javascript
 {
   "slave_address": 63,
@@ -116,12 +120,12 @@ msg.payload = [0x3f, 0x03, 0x00, 0x01, 0x00, 0x16, 0x91, 0x1a];
       "description": "No error",
       "raw_value": 0
     }
-    // ... more registers
+    // ... другие регистры
   }
 }
 ```
 
-#### Simplified Format
+#### Упрощённый формат
 ```javascript
 {
   "slave": 63,
@@ -131,18 +135,74 @@ msg.payload = [0x3f, 0x03, 0x00, 0x01, 0x00, 0x16, 0x91, 0x1a];
   "error_code": 0,
   "temperature": 45,
   "pressure": 2.5
-  // ... more register values
+  // ... другие значения регистров
 }
 ```
 
-## Examples
+## Отправка команд (узел `ermangizer-modbus-encode`)
 
-### Example 1: Reading Multiple Registers
+Парный узел **ERMANGIZER Encode** превращает человекочитаемый объект-команду
+в готовый к отправке кадр Modbus RTU (с CRC) — не нужно собирать hex-строки руками.
+Подключите его выход к вашему узлу serial/Modbus-out.
+
+Задайте `msg.payload` одним из вариантов:
+
 ```javascript
-// Input message (hex string example)
+// Семантические команды (запись регистра 0x1001)
+{ command: "start" }                       // пуск
+{ command: "stop" }                        // стоп
+{ command: "reset_error" }                 // сброс ошибки
+{ command: "set_pressure", value: 3.5 }    // уставка давления в барах
+
+// Запись любого регистра чтения/записи по имени (значение в инженерных единицах)
+{ write: "min_shutdown_freq", value: 30 }  // 30 Гц  -> raw 300 (scale 0.1)
+{ write: "measurement_range", value: 10 }  // датчик 10 бар
+{ write: "carrier_frequency", value: "H" } // 'H' или сырой числовой код
+
+// Запрос на чтение (функция 0x03)
+{ read: "all" }                            // адреса 1..22
+{ read: "monitoring" }                     // адреса 1..7
+{ read: ["output_frequency", "pressure"] } // минимальный диапазон, покрывающий имена
+{ read: { start: 11, count: 4 } }          // явный диапазон
+```
+
+Масштаб (scale) регистра **применяется автоматически** (например, бары → единицы
+0.01 бар), а запись в read-only регистры, неизвестные имена и значения вне диапазона
+отклоняются с понятной ошибкой. Необязательное поле `slave` переопределяет настроенный
+адрес узла для одного сообщения: `{ command: "start", slave: 12 }`.
+
+### Настройки узла
+
+- **Адрес (slave)** — адрес устройства по умолчанию (0–247). По умолчанию `1`;
+  **заводской адрес ERMANGIZER — `63`**, выставьте его под своё устройство.
+- **Выход** — `Buffer` (по умолчанию) или `Hex-строка` в верхнем регистре.
+
+### Связка чтения с декодером
+
+Для команд `read` узел также выставляет `msg.modbus_start_address` — адрес первого
+запрашиваемого регистра. Передайте это сообщение в узел-декодер **ERMANGIZER Modbus**,
+и он сопоставит регистры ответа с правильными адресами (при отсутствии
+`msg.modbus_start_address` декодер использует адрес 1).
+
+### Программное использование
+
+```javascript
+const { ModbusCommandEncoder } = require('node-red-ermangizer-modbus/ermangizer-modbus-encode');
+const cmd = new ModbusCommandEncoder();
+
+cmd.encode({ command: "start" }, 0x3F).frame;          // Buffer, адрес 63
+cmd.encode({ write: "set_pressure", value: 4.0 }).frame;
+cmd.encode({ read: "all", slave: 0x3F });              // { frame, function_code, start_address, description }
+```
+
+## Примеры
+
+### Пример 1. Чтение нескольких регистров
+```javascript
+// Входное сообщение (hex-строка)
 msg.payload = "3f03002c3f032c01f4000100ea0020000000000001000000000001001e000a001e004c0014000a00f00000000600550000003f38ee";
 
-// Output (simplified format):
+// Вывод (упрощённый формат):
 {
   "slave": 63,
   "function": "Read Holding Registers",
@@ -155,12 +215,12 @@ msg.payload = "3f03002c3f032c01f4000100ea0020000000000001000000000001001e000a001
   "status_code": 0
 }
 ```
-### Example 2: Error Response
+### Пример 2. Ответ-исключение
 ```javascript
-// Error response example
+// Пример ответа-исключения
 msg.payload = "3f8302a13d";
 
-// Output:
+// Вывод:
 {
   "slave_address": 63,
   "function_code": 131,
@@ -173,151 +233,161 @@ msg.payload = "3f8302a13d";
 }
 ```
 
-## Error Codes
+## Коды ошибок
 
-The node decodes all ERMANGIZER error codes:
+Узел декодирует все коды ошибок ERMANGIZER:
 
-| Code | Description |
+| Код | Описание |
 |------|-------------|
-| 0 | No error |
-| 1 | Equipment overcurrent, short circuit |
-| 2 | Power overload |
-| 3 | Pressure sensor fault or incorrect connection |
-| 4 | Overpressure or pressure sensor fault |
-| 5 | Low pressure |
-| 6 | Overpressure |
-| 7 | Phase loss (power phase loss) |
-| 8 | Overheating |
-| 9 | Power overload |
-| 10 | Software current fault |
-| 11 | Communication failure |
-| 12 | Reserved |
-| 13 | Motor locked |
-| 14 | Motor phase loss |
-| 15 | Motor overspeed |
-| 16 | Memory failure (FLASH failure) |
+| 0 | Нет ошибки |
+| 1 | Перегрузка по току оборудования, короткое замыкание |
+| 2 | Перегрузка по мощности |
+| 3 | Неисправность датчика давления или неверное подключение |
+| 4 | Превышение давления или неисправность датчика давления |
+| 5 | Низкое давление |
+| 6 | Превышение давления |
+| 7 | Обрыв фазы (потеря фазы питания) |
+| 8 | Перегрев |
+| 9 | Перегрузка по мощности |
+| 10 | Программная токовая защита |
+| 11 | Сбой связи |
+| 12 | Зарезервировано |
+| 13 | Заклинивание двигателя |
+| 14 | Обрыв фазы двигателя |
+| 15 | Превышение скорости двигателя |
+| 16 | Сбой памяти (FLASH) |
 
-## Status Code Decoding
+## Расшифровка кода статуса
 
-The status register (0x0007) is decoded into individual bits:
+Регистр статуса (0x0007) раскладывается на отдельные биты:
 
 ```javascript
 {
-  "running": true,          // Bit 0 (RS): 0=stopped, 1=running
-  "water_shortage": false,  // Bit 1 (LS): 0=no water shortage, 1=water shortage
-  "raw_value": 1           // Original register value
+  "running": true,          // Бит 0 (RS): 0=стоп, 1=работа
+  "water_shortage": false,  // Бит 1 (LS): 0=нет сухого хода, 1=сухой ход
+  "raw_value": 1            // Исходное значение регистра
 }
 ```
 
-## Building from Source
+## Сборка из исходников
 
-If you're modifying the TypeScript source:
+Если вы правите исходники на TypeScript:
 
-1. Install dependencies:
+1. Установите зависимости:
    ```bash
    npm install
    ```
 
-2. Build the project:
+2. Соберите проект:
    ```bash
    npm run build
    ```
 
-3. For development with auto-rebuild:
+3. Разработка с авто-пересборкой:
    ```bash
    npm run dev
    ```
 
-## Testing
+## Тесты
 
-The package ships with a dependency-free test suite (`test/test.js`) that validates
-CRC-16 against the official documented frames, decoding of every register, and
-encode→decode round-trips:
+В пакете есть набор тестов без внешних зависимостей (`test/test.js`): проверяет
+CRC-16 на эталонных кадрах из документации, декодирование всех регистров и
+round-trip энкод→декод:
 
 ```bash
-npm test   # runs `tsc` then executes the suite
+npm test   # сначала `tsc`, затем запуск тестов
 ```
 
-## Building Frames (encoder)
+## Сборка кадров (энкодер)
 
-In addition to decoding, the module exports a `ModbusEncoder` that builds valid
-frames with the CRC computed automatically — useful for generating requests or
-test fixtures:
+Помимо декодирования, модуль экспортирует `ModbusEncoder` для сборки валидных
+кадров с автоматическим CRC — удобно для генерации запросов и тест-фикстур:
 
 ```javascript
 const { ModbusEncoder } = require('node-red-ermangizer-modbus');
 const enc = new ModbusEncoder();
 
-enc.encodeReadRequest(0x3F, 1, 22);        // read 22 registers from address 1
-enc.encodeWriteRequest(0x3F, 0x1000, 400); // set pressure to 4.00 bar
-enc.appendCRC(Buffer.from([0x3f, 0x06]));  // append a CRC-16 to any frame body
+enc.encodeReadRequest(0x3F, 1, 22);        // чтение 22 регистров с адреса 1
+enc.encodeWriteRequest(0x3F, 0x1000, 400); // установить давление 4.00 бар
+enc.appendCRC(Buffer.from([0x3f, 0x06]));  // дописать CRC-16 к телу кадра
 ```
 
-The `ModbusDecoder`, `MODBUS_REGISTERS`, `ERROR_CODES`, `calculateCRC16` and
-`appendCRC` helpers are exported as well.
+Также экспортируются `ModbusDecoder`, `MODBUS_REGISTERS`, `ERROR_CODES`,
+`calculateCRC16` и `appendCRC`.
 
-## Troubleshooting
+## Устранение неполадок
 
-### Common Issues
+### Частые проблемы
 
-1. **"CRC check failed"**
-   - Verify the Modbus message is complete and uncorrupted
-   - Check that the entire message including CRC is provided
+1. **«CRC check failed»**
+   - Убедитесь, что сообщение Modbus полное и не повреждено
+   - Проверьте, что передаётся всё сообщение, включая CRC
 
-2. **"Message too short"**
-   - Ensure the input contains at least 4 bytes (address + function code + CRC)
+2. **«Message too short»**
+   - Во входе должно быть не менее 4 байт (адрес + код функции + CRC)
 
-3. **"Unsupported input type"**
-   - Use one of the supported formats: Buffer, hex string, or number array
-   - Enable auto-detection if unsure of the format
+3. **«Unsupported input type»**
+   - Используйте один из форматов: Buffer, hex-строка или массив чисел
+   - При сомнениях включите автоопределение
 
-4. **Node not appearing in palette**
-   - Check that all files are in the correct location
-   - Verify there are no syntax errors in the files
-   - Restart Node-RED completely
+4. **Узел не появляется в палитре**
+   - Проверьте, что все файлы на месте
+   - Убедитесь в отсутствии синтаксических ошибок
+   - Полностью перезапустите Node-RED
 
-### Debugging
+### Отладка
 
-Enable Node-RED debug output to see detailed processing information:
+Включите отладочный вывод Node-RED для детальной информации:
 
-1. Add a debug node connected to the ERMANGIZER Modbus node output
-2. Set debug to display complete message object
-3. Check the Node-RED logs for any error messages
+1. Подключите узел debug к выходу узла ERMANGIZER Modbus
+2. Включите отображение полного объекта сообщения
+3. Смотрите логи Node-RED на наличие ошибок
 
-## Protocol Reference
+## Справка по протоколу
 
-This node implements the ERMANGIZER Modbus RTU protocol (ER-G-220-03, ER-G-220-04, ER-G-380-02; 2026 revision) as specified in:
-- **Document**: `protocol_modbus_eg-g-220-03.pdf` — https://www.ermangizer.ru/docs/220-03/protocol_modbus_eg-g-220-03.pdf (see also https://www.ermangizer.ru/documentation.html)
-- **Baud Rate**: 9600
-- **Data Bits**: 8 bits + 1 stop bit
-- **Parity**: None
-- **Device Address Range**: 1-63
-- **Default Address**: 63
+Узел реализует протокол Modbus RTU ERMANGIZER (ER-G-220-03, ER-G-220-04, ER-G-380-02; редакция 2026), описанный в:
+- **Документ**: `protocol_modbus_eg-g-220-03.pdf` — https://www.ermangizer.ru/docs/220-03/protocol_modbus_eg-g-220-03.pdf (см. также https://www.ermangizer.ru/documentation.html)
+- **Скорость**: 9600
+- **Биты данных**: 8 бит + 1 стоп-бит
+- **Чётность**: нет
+- **Диапазон адресов**: 1–63
+- **Адрес по умолчанию**: 63
 
-## License
+## Лицензия
 
-This project is licensed under the MIT License.
+Проект распространяется по лицензии MIT.
 
-## Support
+## Поддержка
 
-For issues and feature requests, please contact the maintainers or refer to the ERMANGIZER protocol documentation.
+По вопросам и предложениям обращайтесь к сопровождающим или к документации протокола ERMANGIZER.
 
-## Changelog
+## История изменений
+
+### v1.2.0
+- Добавлен узел **`ermangizer-modbus-encode`**: сборка кадров Modbus RTU из
+  человекочитаемых команд (`{command:"start"}`, `{write:"set_pressure", value:3.5}`,
+  `{read:"all"}`) вместо ручных hex-строк — CRC и масштабирование регистров
+  выполняются автоматически
+- Вывод в Buffer или hex-строку; переопределение `slave` для сообщения
+- Команды `read` выставляют `msg.modbus_start_address`; декодер теперь его учитывает,
+  и чтение с любого адреса декодируется под правильными именами регистров
+- Экспортируется `ModbusCommandEncoder` для программного использования
+- Добавлена русская (`ru`) локализация редактора для обоих узлов; README теперь
+  доступен на русском (по умолчанию) и английском
 
 ### v1.1.0
-- Aligned with the 2026 protocol revision (ER-G-220-03 / ER-G-220-04 / ER-G-380-02); updated register descriptions and error codes
-- **Fix:** register addresses are decimal (1–22) — read/write registers 10–22 previously decoded as `unknown`
-- **Fix:** status bits were swapped (bit0=running, bit1=water shortage)
-- **Fix:** decoded descriptions (e.g. `error_code` "No error") no longer overwritten by static metadata
-- **Fix:** auto-detect no longer permanently locks the node's input format after the first message
-- Simplified output now emits a scalar per register (value → code → raw_value)
-- Added `ModbusEncoder` for building valid frames with automatic CRC
-- Added a dependency-free test suite (`npm test`)
+- Согласовано с редакцией протокола 2026 (ER-G-220-03 / ER-G-220-04 / ER-G-380-02); обновлены описания регистров и коды ошибок
+- **Исправление:** адреса регистров десятичные (1–22) — регистры 10–22 раньше декодировались как `unknown`
+- **Исправление:** биты статуса были перепутаны (бит0=работа, бит1=сухой ход)
+- **Исправление:** декодированные описания (например, `error_code` «No error») больше не затираются статическими метаданными
+- **Исправление:** автоопределение больше не фиксирует формат входа навсегда после первого сообщения
+- Упрощённый вывод теперь даёт скаляр на регистр (value → code → raw_value)
+- Добавлен `ModbusEncoder` для сборки валидных кадров с автоматическим CRC
+- Добавлен набор тестов без внешних зависимостей (`npm test`)
 
 ### v1.0.0
-- Initial release
-- Support for all ERMANGIZER Modbus registers
-- Multiple input format support
-- CRC verification
-- Comprehensive error handling
-
+- Первый выпуск
+- Поддержка всех регистров Modbus ERMANGIZER
+- Несколько форматов входа
+- Проверка CRC
+- Обработка ошибок

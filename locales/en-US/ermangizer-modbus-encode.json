@@ -1,0 +1,13 @@
+{
+    "ermangizer-modbus-encode": {
+        "label": "ERMANGIZER Modbus Encoder",
+        "name": "Name",
+        "slave": "Slave",
+        "outputFormat": "Output",
+        "outputFormat_buffer": "Buffer",
+        "outputFormat_hexstring": "Hex String",
+        "info_label": "Info",
+        "info": "<strong>Send a command object as msg.payload:</strong><br>• <code>{ command: \"start\" }</code> / <code>\"stop\"</code> / <code>\"reset_error\"</code><br>• <code>{ command: \"set_pressure\", value: 3.5 }</code> (bar)<br>• <code>{ write: \"min_shutdown_freq\", value: 30 }</code><br>• <code>{ read: \"all\" }</code> / <code>\"monitoring\"</code> / <code>[\"output_frequency\",\"pressure\"]</code><br><br><strong>Slave</strong> can be overridden per message via <code>msg.payload.slave</code>.<br>Output is a ready-to-send Modbus RTU frame (CRC included).",
+        "tip": "Builds ERMANGIZER Modbus RTU frames from human-friendly commands"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "ermangizer-modbus-encode": {
+        "label": "ERMANGIZER Modbus — энкодер",
+        "name": "Имя",
+        "slave": "Адрес (slave)",
+        "outputFormat": "Выход",
+        "outputFormat_buffer": "Buffer",
+        "outputFormat_hexstring": "Hex-строка",
+        "info_label": "Справка",
+        "info": "<strong>Передайте объект-команду в msg.payload:</strong><br>• <code>{ command: \"start\" }</code> / <code>\"stop\"</code> / <code>\"reset_error\"</code><br>• <code>{ command: \"set_pressure\", value: 3.5 }</code> (бар)<br>• <code>{ write: \"min_shutdown_freq\", value: 30 }</code><br>• <code>{ read: \"all\" }</code> / <code>\"monitoring\"</code> / <code>[\"output_frequency\",\"pressure\"]</code><br><br><strong>Адрес</strong> можно переопределить для конкретного сообщения через <code>msg.payload.slave</code>.<br>На выходе — готовый кадр Modbus RTU (с CRC).",
+        "tip": "Собирает кадры Modbus RTU для ERMANGIZER из человекочитаемых команд"
+    }
+}

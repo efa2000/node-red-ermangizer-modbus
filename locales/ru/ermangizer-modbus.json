@@ -1,0 +1,17 @@
+{
+    "ermangizer-modbus": {
+        "label": "ERMANGIZER Modbus — декодер",
+        "name": "Имя",
+        "inputType": "Тип входа",
+        "inputType_auto": "Автоопределение",
+        "inputType_buffer": "Buffer",
+        "inputType_hexstring": "Hex-строка",
+        "inputType_array": "Массив чисел",
+        "outputFormat": "Формат вывода",
+        "outputFormat_detailed": "Подробный",
+        "outputFormat_simplified": "Упрощённый",
+        "info_label": "Справка",
+        "info": "<strong>Поддерживаемые форматы входа:</strong><br>• Buffer: объекты Buffer<br>• Hex-строка: шестнадцатеричная строка (напр. \"3f0300010016911a\")<br>• Массив чисел: массив байт<br><br><strong>Форматы вывода:</strong><br>• Подробный: полное декодирование с метаданными<br>• Упрощённый: только значения регистров",
+        "tip": "Декодирует сообщения Modbus RTU частотного преобразователя ERMANGIZER"
+    }
+}

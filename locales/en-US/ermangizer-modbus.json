@@ -10,6 +10,8 @@
         "outputFormat": "Output Format",
         "outputFormat_detailed": "Detailed",
         "outputFormat_simplified": "Simplified",
+        "info_label": "Info",
+        "info": "<strong>Supported Input Formats:</strong><br>• Buffer: Raw Buffer objects<br>• Hex String: Hexadecimal strings (e.g., \"3f0300010016911a\")<br>• Number Array: Arrays of numbers<br><br><strong>Output Formats:</strong><br>• Detailed: Complete decoding with metadata<br>• Simplified: Only register values",
         "tip": "Decodes ERMANGIZER frequency converter Modbus RTU messages"
     }
 }

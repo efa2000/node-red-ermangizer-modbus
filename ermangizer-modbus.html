@@ -22,40 +22,32 @@
 
 <script type="text/html" data-template-name="ermangizer-modbus">
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="ermangizer-modbus.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]ermangizer-modbus.name">
     </div>
-    
+
     <div class="form-row">
-        <label for="node-input-inputType"><i class="fa fa-sign-in"></i> Input Type</label>
+        <label for="node-input-inputType"><i class="fa fa-sign-in"></i> <span data-i18n="ermangizer-modbus.inputType"></span></label>
         <select id="node-input-inputType" style="width: 70%;">
-            <option value="auto">Auto Detect</option>
-            <option value="buffer">Buffer</option>
-            <option value="hexstring">Hex String</option>
-            <option value="array">Number Array</option>
+            <option value="auto" data-i18n="ermangizer-modbus.inputType_auto"></option>
+            <option value="buffer" data-i18n="ermangizer-modbus.inputType_buffer"></option>
+            <option value="hexstring" data-i18n="ermangizer-modbus.inputType_hexstring"></option>
+            <option value="array" data-i18n="ermangizer-modbus.inputType_array"></option>
         </select>
     </div>
-    
+
     <div class="form-row">
-        <label for="node-input-outputFormat"><i class="fa fa-sign-out"></i> Output Format</label>
+        <label for="node-input-outputFormat"><i class="fa fa-sign-out"></i> <span data-i18n="ermangizer-modbus.outputFormat"></span></label>
         <select id="node-input-outputFormat" style="width: 70%;">
-            <option value="detailed">Detailed</option>
-            <option value="simplified">Simplified</option>
+            <option value="detailed" data-i18n="ermangizer-modbus.outputFormat_detailed"></option>
+            <option value="simplified" data-i18n="ermangizer-modbus.outputFormat_simplified"></option>
         </select>
     </div>
-    
+
     <div class="form-row">
-        <label for="node-input-info"><i class="fa fa-info-circle"></i> Info</label>
+        <label><i class="fa fa-info-circle"></i> <span data-i18n="ermangizer-modbus.info_label"></span></label>
         <div style="margin-top: 5px; padding: 10px; background: #f0f0f0; border-radius: 3px;">
-            <small>
-                <strong>Supported Input Formats:</strong><br>
-                • Buffer: Raw Buffer objects<br>
-                • Hex String: Hexadecimal strings (e.g., "3f0300010016911a")<br>
-                • Number Array: Arrays of numbers<br><br>
-                <strong>Output Formats:</strong><br>
-                • Detailed: Complete decoding with metadata<br>
-                • Simplified: Only register values
-            </small>
+            <small data-i18n="[html]ermangizer-modbus.info"></small>
         </div>
     </div>
 </script>

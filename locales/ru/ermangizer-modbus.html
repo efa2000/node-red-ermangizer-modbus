@@ -1,0 +1,53 @@
+<script type="text/html" data-help-name="ermangizer-modbus">
+    <p>Декодирует сообщения протокола Modbus RTU частотного преобразователя ERMANGIZER.</p>
+
+    <h3>Входы</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">Buffer | строка | массив</span></dt>
+        <dd>Сообщение Modbus RTU в одном из поддерживаемых форматов:
+            <ul>
+                <li><strong>Buffer:</strong> объект Buffer</li>
+                <li><strong>Hex-строка:</strong> шестнадцатеричная строка (напр. "3f0300010016911a")</li>
+                <li><strong>Массив чисел:</strong> массив байт</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h3>Выходы</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">объект</span></dt>
+        <dd>Декодированные данные Modbus:
+            <ul>
+                <li><strong>slave_address</strong> — адрес устройства</li>
+                <li><strong>function_code</strong> — код функции Modbus</li>
+                <li><strong>function_name</strong> — описание функции</li>
+                <li><strong>registers</strong> — объект с декодированными значениями регистров</li>
+                <li><strong>raw_data</strong> — исходные данные в hex</li>
+                <li><strong>timestamp</strong> — метка времени обработки</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h3>Подробнее</h3>
+    <p>Узел декодирует сообщения Modbus RTU согласно протоколу частотного преобразователя ERMANGIZER.</p>
+    <p>Поддерживаются все регистры протокола, включая:</p>
+    <ul>
+        <li>Выходную частоту, ток и напряжение</li>
+        <li>Температуру и давление</li>
+        <li>Коды ошибок и статуса</li>
+        <li>Параметры конфигурации</li>
+        <li>Команды управления</li>
+    </ul>
+
+    <h3>Настройки узла</h3>
+    <ul>
+        <li><strong>Имя</strong> — необязательное имя узла</li>
+        <li><strong>Тип входа</strong> — формат входа или автоопределение</li>
+        <li><strong>Формат вывода</strong> — подробный или упрощённый</li>
+    </ul>
+
+    <h3>Связка с энкодером</h3>
+    <p>Для ответов на чтение (функция 0x03) узел <code>ermangizer-modbus-encode</code>
+       выставляет <code>msg.modbus_start_address</code>. Если это поле присутствует,
+       декодер сопоставляет регистры начиная с указанного адреса (по умолчанию 1).</p>
+</script>

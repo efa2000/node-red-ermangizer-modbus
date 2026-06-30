@@ -366,8 +366,12 @@ const nodeRegistration = function(RED: NodeAPI) {
                 }
             }
 
+            // A paired encoder node sets msg.modbus_start_address for 0x03 reads so
+            // the returned registers map to the right addresses; default to 1.
+            const startAddress = typeof msg.modbus_start_address === 'number' ? msg.modbus_start_address : 1;
+
             try {
-                const decodedData = decoder.decodeModbusMessage(inputData);
+                const decodedData = decoder.decodeModbusMessage(inputData, startAddress);
                 
                 if (this.outputFormat === 'simplified') {
                     const simplified: any = {

@@ -1,0 +1,96 @@
+<script type="text/javascript">
+    RED.nodes.registerType('ermangizer-modbus-encode', {
+        category: 'function',
+        color: '#a6bbcf',
+        defaults: {
+            name: { value: '' },
+            slave: { value: 1, required: true, validate: RED.validators.number() },
+            outputFormat: { value: 'buffer', required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-paper-plane',
+        paletteLabel: 'ERMANGIZER Encode',
+        label: function() {
+            return this.name || 'ERMANGIZER Encode';
+        },
+        labelStyle: function() {
+            return this.name ? 'node_label_italic' : '';
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ermangizer-modbus-encode">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="ermangizer-modbus-encode.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]ermangizer-modbus-encode.name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-slave"><i class="fa fa-id-card-o"></i> <span data-i18n="ermangizer-modbus-encode.slave"></span></label>
+        <input type="number" id="node-input-slave" min="0" max="247" placeholder="1" style="width: 70%;">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-outputFormat"><i class="fa fa-sign-out"></i> <span data-i18n="ermangizer-modbus-encode.outputFormat"></span></label>
+        <select id="node-input-outputFormat" style="width: 70%;">
+            <option value="buffer" data-i18n="ermangizer-modbus-encode.outputFormat_buffer"></option>
+            <option value="hexstring" data-i18n="ermangizer-modbus-encode.outputFormat_hexstring"></option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label><i class="fa fa-info-circle"></i> <span data-i18n="ermangizer-modbus-encode.info_label"></span></label>
+        <div style="margin-top: 5px; padding: 10px; background: #f0f0f0; border-radius: 3px;">
+            <small data-i18n="[html]ermangizer-modbus-encode.info"></small>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ermangizer-modbus-encode">
+    <p>Builds valid ERMANGIZER frequency converter Modbus RTU frames from a
+       human-friendly command object, with the CRC-16 computed automatically.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>A command object using one of the following keys:
+            <ul>
+                <li><strong>command</strong> — semantic command:
+                    <code>"start"</code>, <code>"stop"</code>, <code>"reset_error"</code>,
+                    or <code>{ command: "set_pressure", value: 3.5 }</code></li>
+                <li><strong>write</strong> — write a register by name:
+                    <code>{ write: "min_shutdown_freq", value: 30 }</code>.
+                    Values are in engineering units; the register scale is applied
+                    automatically. Read-only registers are rejected.</li>
+                <li><strong>read</strong> — build a read request (function 0x03):
+                    <code>"all"</code> (addr 1..22), <code>"monitoring"</code> (addr 1..7),
+                    an array of register names, or <code>{ start, count }</code>.</li>
+            </ul>
+            An optional <code>slave</code> field overrides the node's configured
+            slave address for that message.
+        </dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">Buffer | string</span></dt>
+        <dd>The encoded Modbus RTU frame, as a Buffer (default) or an uppercase
+            hex string, depending on the Output setting.</dd>
+        <dt>modbus_start_address <span class="property-type">number</span></dt>
+        <dd>For <code>read</code> commands: the address of the first register
+            requested. Feed this through to the decoder node so it maps the
+            response to the correct registers.</dd>
+    </dl>
+
+    <h3>Node Settings</h3>
+    <ul>
+        <li><strong>Name</strong> — Optional name for the node</li>
+        <li><strong>Slave</strong> — Default slave address (0..247), overridable via <code>msg.payload.slave</code></li>
+        <li><strong>Output</strong> — Buffer or Hex String</li>
+    </ul>
+
+    <h3>Errors</h3>
+    <p>Invalid commands, unknown or read-only registers, and out-of-range values
+       produce an error object on <code>msg.payload</code> and set <code>msg.error</code>.</p>
+</script>

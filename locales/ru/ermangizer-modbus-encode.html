@@ -1,0 +1,49 @@
+<script type="text/html" data-help-name="ermangizer-modbus-encode">
+    <p>Собирает корректные кадры Modbus RTU частотного преобразователя ERMANGIZER
+       из человекочитаемого объекта-команды; CRC-16 вычисляется автоматически.</p>
+
+    <h3>Входы</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">объект</span></dt>
+        <dd>Объект-команда с одним из ключей:
+            <ul>
+                <li><strong>command</strong> — семантическая команда:
+                    <code>"start"</code>, <code>"stop"</code>, <code>"reset_error"</code>
+                    или <code>{ command: "set_pressure", value: 3.5 }</code></li>
+                <li><strong>write</strong> — запись регистра по имени:
+                    <code>{ write: "min_shutdown_freq", value: 30 }</code>.
+                    Значения задаются в инженерных единицах — масштаб (scale) регистра
+                    применяется автоматически. Запись в read-only регистры отклоняется.</li>
+                <li><strong>read</strong> — запрос на чтение (функция 0x03):
+                    <code>"all"</code> (адреса 1..22), <code>"monitoring"</code> (адреса 1..7),
+                    массив имён регистров или <code>{ start, count }</code>.</li>
+            </ul>
+            Необязательное поле <code>slave</code> переопределяет настроенный адрес
+            узла для конкретного сообщения.
+        </dd>
+    </dl>
+
+    <h3>Выходы</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">Buffer | строка</span></dt>
+        <dd>Готовый кадр Modbus RTU — Buffer (по умолчанию) или hex-строка
+            в верхнем регистре, в зависимости от настройки «Выход».</dd>
+        <dt>modbus_start_address <span class="property-type">число</span></dt>
+        <dd>Для команд <code>read</code>: адрес первого запрашиваемого регистра.
+            Передайте это сообщение в узел-декодер, чтобы он сопоставил ответ
+            с правильными регистрами.</dd>
+    </dl>
+
+    <h3>Настройки узла</h3>
+    <ul>
+        <li><strong>Имя</strong> — необязательное имя узла</li>
+        <li><strong>Адрес (slave)</strong> — адрес устройства по умолчанию (0..247),
+            переопределяется через <code>msg.payload.slave</code></li>
+        <li><strong>Выход</strong> — Buffer или Hex-строка</li>
+    </ul>
+
+    <h3>Ошибки</h3>
+    <p>Неизвестные команды, неизвестные или read-only регистры и значения вне
+       диапазона дают объект ошибки в <code>msg.payload</code> и выставляют
+       <code>msg.error</code>.</p>
+</script>

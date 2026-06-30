@@ -1,6 +1,6 @@
 {
   "name": "node-red-ermangizer-modbus",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "Efa2000",
   "license": "MIT",
   "description": "Node-RED node for ERMANGIZER Modbus RTU protocol decoding",
@@ -8,7 +8,8 @@
   "node-red": {
     "version": ">=3.0.0",
     "nodes": {
-      "ermangizer-modbus": "ermangizer-modbus.js"
+      "ermangizer-modbus": "ermangizer-modbus.js",
+      "ermangizer-modbus-encode": "ermangizer-modbus-encode.js"
     }
   },
   "scripts": {

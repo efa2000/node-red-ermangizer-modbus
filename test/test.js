@@ -4,9 +4,13 @@
 const assert = require('assert');
 const mod = require('../ermangizer-modbus.js');
 
+const encMod = require('../ermangizer-modbus-encode.js');
+
 const { ModbusDecoder, ModbusEncoder, calculateCRC16, appendCRC } = mod;
+const { ModbusCommandEncoder } = encMod;
 const decoder = new ModbusDecoder();
 const encoder = new ModbusEncoder();
+const cmdEncoder = new ModbusCommandEncoder();
 
 let passed = 0;
 let failed = 0;
@@ -184,7 +188,7 @@ test('unsupported input type is rejected', () => {
 console.log('\nNode simplified output:');
 const EventEmitter = require('events');
 
-function runNode(config, payload) {
+function runNode(config, payload, extraMsg) {
     let Ctor;
     const RED = {
         nodes: {
@@ -199,7 +203,7 @@ function runNode(config, payload) {
     const node = Object.create(Ctor.prototype);
     Ctor.call(node, config);
     let out;
-    node.emit('input', { payload }, (m) => { out = m; }, () => {});
+    node.emit('input', Object.assign({ payload }, extraMsg), (m) => { out = m; }, () => {});
     return out.payload;
 }
 
@@ -217,6 +221,118 @@ test('simplified: write set_pressure -> scalar 4.0', () => {
     const p = runNode({ inputType: 'auto', outputFormat: 'simplified' },
         docFrames['write set_pressure']);
     assert.strictEqual(p.set_pressure, 4.0);
+});
+
+// ---------------------------------------------------------------------------
+// 8. Command encoder: human-friendly command objects -> Modbus frames
+// ---------------------------------------------------------------------------
+console.log('\nCommand encoder:');
+test('command "start" -> write 0x1001 = 0x01', () => {
+    const { frame } = cmdEncoder.encode({ command: 'start' });
+    assert.deepStrictEqual(frame, encoder.encodeWriteRequest(1, 0x1001, 0x01));
+    const d = decoder.decodeModbusMessage(frame);
+    assert.strictEqual(d.registers.status_command.description, 'running');
+});
+test('command "stop" -> 0x04, "reset_error" -> 0x11', () => {
+    assert.deepStrictEqual(cmdEncoder.encode({ command: 'stop' }).frame,
+        encoder.encodeWriteRequest(1, 0x1001, 0x04));
+    assert.deepStrictEqual(cmdEncoder.encode({ command: 'reset_error' }).frame,
+        encoder.encodeWriteRequest(1, 0x1001, 0x11));
+});
+test('command "set_pressure" 3.5 bar -> raw 350', () => {
+    const { frame } = cmdEncoder.encode({ command: 'set_pressure', value: 3.5 });
+    const d = decoder.decodeModbusMessage(frame);
+    assert.strictEqual(d.registers.set_pressure.value, 3.5);
+});
+test('unknown command is rejected', () => {
+    assert.throws(() => cmdEncoder.encode({ command: 'fly' }), /Unknown command/);
+});
+test('write set_pressure 4.0 bar matches the doc frame (slave 0x3F)', () => {
+    const { frame } = cmdEncoder.encode({ write: 'set_pressure', value: 4.0, slave: 0x3F });
+    assert.deepStrictEqual(frame, hexToBuf(docFrames['write set_pressure']));
+});
+test('write applies inverse scale (min_shutdown_freq 30 Hz -> raw 300)', () => {
+    const { frame } = cmdEncoder.encode({ write: 'min_shutdown_freq', value: 30 });
+    const d = decoder.decodeModbusMessage(frame);
+    assert.strictEqual(d.registers.min_shutdown_freq.value, 30);
+});
+test('write carrier_frequency "H" -> raw 72', () => {
+    const { frame } = cmdEncoder.encode({ write: 'carrier_frequency', value: 'H' });
+    assert.strictEqual(frame.readUInt16BE(4), 72);
+});
+test('write to a read-only register is rejected', () => {
+    assert.throws(() => cmdEncoder.encode({ write: 'output_frequency', value: 50 }), /read-only/);
+});
+test('write to an unknown register is rejected', () => {
+    assert.throws(() => cmdEncoder.encode({ write: 'nope', value: 1 }), /Unknown register/);
+});
+test('out-of-range value is rejected', () => {
+    assert.throws(() => cmdEncoder.encode({ write: 'local_address', value: 70000 }), /out of range/);
+});
+test('read "all" matches the doc read request (slave 0x3F)', () => {
+    const { frame, start_address } = cmdEncoder.encode({ read: 'all', slave: 0x3F });
+    assert.deepStrictEqual(frame, hexToBuf(docFrames['read request (22 regs)']));
+    assert.strictEqual(start_address, 1);
+});
+test('read "monitoring" -> start 1, count 7', () => {
+    const { frame } = cmdEncoder.encode({ read: 'monitoring', slave: 0x3F });
+    assert.deepStrictEqual(frame, encoder.encodeReadRequest(0x3F, 1, 7));
+});
+test('read by names -> smallest covering range', () => {
+    const { frame, start_address } = cmdEncoder.encode({ read: ['output_frequency', 'pressure'] });
+    assert.deepStrictEqual(frame, encoder.encodeReadRequest(1, 1, 5)); // addr 1..5
+    assert.strictEqual(start_address, 1);
+});
+test('read by names spanning control registers is rejected', () => {
+    assert.throws(() => cmdEncoder.encode({ read: ['output_frequency', 'set_pressure'] }),
+        /addresses 1\.\.22/);
+});
+test('non-object payload is rejected', () => {
+    assert.throws(() => cmdEncoder.encode('start'), /must be an object/);
+});
+
+// ---------------------------------------------------------------------------
+// 9. Encoder node: output format + slave default, and decoder honoring start_address
+// ---------------------------------------------------------------------------
+console.log('\nEncoder node + start_address pairing:');
+function runEncodeNode(config, payload) {
+    let Ctor;
+    const RED = {
+        nodes: {
+            createNode(node) {
+                Object.assign(node, EventEmitter.prototype);
+                EventEmitter.call(node);
+            },
+            registerType(_name, ctor) { Ctor = ctor; }
+        }
+    };
+    encMod(RED);
+    const node = Object.create(Ctor.prototype);
+    Ctor.call(node, config);
+    let out;
+    node.emit('input', { payload }, (m) => { out = m; }, () => {});
+    return out;
+}
+test('node default slave is 1, output is a Buffer', () => {
+    const msg = runEncodeNode({ slave: 1, outputFormat: 'buffer' }, { command: 'start' });
+    assert.ok(Buffer.isBuffer(msg.payload));
+    assert.deepStrictEqual(msg.payload, encoder.encodeWriteRequest(1, 0x1001, 0x01));
+});
+test('node hexstring output', () => {
+    const msg = runEncodeNode({ slave: 0x3F, outputFormat: 'hexstring' }, { read: 'all' });
+    assert.strictEqual(msg.payload, docFrames['read request (22 regs)'].replace(/\s/g, '').toUpperCase());
+});
+test('node sets msg.modbus_start_address for reads', () => {
+    const msg = runEncodeNode({ slave: 1, outputFormat: 'buffer' }, { read: 'monitoring' });
+    assert.strictEqual(msg.modbus_start_address, 1);
+});
+test('decoder node honors msg.modbus_start_address', () => {
+    // A read response for addresses 10..12 must decode under those names.
+    const frame = encoder.encodeReadResponse(0x3F, [0, 350, 200]); // addr 10,11,12
+    const p = runNode({ inputType: 'auto', outputFormat: 'detailed' }, frame, { modbus_start_address: 10 });
+    assert.ok(p.registers.initial_pressure_diff, 'expected addr 11 to decode');
+    assert.strictEqual(p.registers.initial_pressure_diff.value, 3.5); // 350 * 0.01
+    assert.strictEqual(p.registers.water_shortage_pressure.value, 2.0); // addr 12: 200 * 0.01
 });
 
 // ---------------------------------------------------------------------------
